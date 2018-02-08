@@ -4,18 +4,28 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.ConfigurationInfo;
 import android.opengl.GLES20;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 
 /**
  * Created by 91752 on 2018/2/7.
  */
 
 public class Tool {
+    private static final String TAG = "pengjiawei.com.opengl_demo.Tool";
         /**
          * @param vertexs float 数组
          * @return 获取浮点形缓冲数据
@@ -31,18 +41,6 @@ public class Tool {
             buffer.position(0);
             return buffer;
         }
-    public static int loadShader(int type, String shaderCode){
-
-        // create a vertex shader type (GLES20.GL_VERTEX_SHADER)
-        // or a fragment shader type (GLES20.GL_FRAGMENT_SHADER)
-        int shader = GLES20.glCreateShader(type);
-
-        // add the source code to the shader and compile it
-        GLES20.glShaderSource(shader, shaderCode);
-        GLES20.glCompileShader(shader);
-
-        return shader;
-    }
     public static void measureView(View child) {
         ViewGroup.LayoutParams params = child.getLayoutParams();
         if (params == null) {
@@ -63,12 +61,46 @@ public class Tool {
         }
         child.measure(childWidthSpec, childHeightSpec);
     }
-    public boolean checkSupportGl20(Context context){
+
+    public static boolean checkSupportGl20(Context context) {
         final ActivityManager activityManager =
                 (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         final ConfigurationInfo configurationInfo =
                 activityManager.getDeviceConfigurationInfo();
         final boolean supportsEs2 = configurationInfo.reqGlEsVersion >= 0x20000;
         return supportsEs2;
+    }
+
+    public static ArrayList<Float> readFile(InputStream inputStream) throws IOException {
+        InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+        BufferedReader br = new BufferedReader(inputStreamReader);
+        String str = null;
+        ArrayList<Float> arrayList = new ArrayList<Float>();
+        while ((str = br.readLine()) != null) {
+            String[] split = str.split(" ");
+            arrayList.add(Float.valueOf(split[2]));
+        }
+        br.close();
+        inputStreamReader.close();
+        Log.d(TAG, "readFile: array size = "+arrayList.size());
+        return arrayList;
+    }
+    public static ArrayList<Float> transfer(ArrayList<Float> infloats){
+        ArrayList<Float> floats = new ArrayList<>();
+        BigDecimal b1 = new BigDecimal(Double.valueOf(2));
+        BigDecimal b2 = new BigDecimal(Double.valueOf(480));
+
+            float distance = b1.divide(b2,1000,BigDecimal.ROUND_HALF_UP).floatValue();
+            for (int i = 0; i < infloats.size() ;++i){
+                if(infloats.get(i) == 254){
+                    int x = i % 480;
+                    int y = i / 480;
+                    floats.add(-1 + distance * x);
+                    floats.add(-1 + distance * y);
+                    floats.add(0f);
+                }
+            }
+        Log.d(TAG, "transfer: outfloats size = "+floats.size());
+        return floats;
     }
 }

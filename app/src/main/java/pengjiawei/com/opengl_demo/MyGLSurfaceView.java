@@ -11,6 +11,7 @@ import android.view.ViewConfiguration;
 
 import java.util.Random;
 
+import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -18,31 +19,35 @@ import javax.microedition.khronos.opengles.GL10;
  * Created by 91752 on 2018/2/8.
  */
 
-public class myGLSurfaceView extends GLSurfaceView {
+public class MyGLSurfaceView extends GLSurfaceView {
     private final String TAG = "pengjiawei.com.opengl_demo.myGLSurfaceView";
     private ScaleGestureDetector scaleGestureDetector;
-    float mLastX,mLastY;
-    int pointerCount;
-    int NONE = 0,DRAG = 1,ZOOM = 2;
-    int state = NONE;
-    float preScale = 1f;
-    int scaledTouchSlop;
+    private float mLastX,mLastY;
+    private int pointerCount;
+    private int NONE = 0,DRAG = 1,ZOOM = 2;
+    private int state = NONE;
+    private float preScale = 1f;
+    private int scaledTouchSlop;
     private MyGLRender myGLRender;
-    private float minScale = 0.25f,maxScale = 4f;
-    public myGLSurfaceView(Context context) {
+    private float minScale = 1f,maxScale = 12f;
+    public MyGLSurfaceView(Context context) {
         super(context);
-
     }
 
-    public myGLSurfaceView(Context context, AttributeSet attrs) {
+    public MyGLSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.setEGLContextClientVersion(1);
+//        this.setEGLConfigChooser(new MyConfigChooser());
         myGLRender = new MyGLRender();
         this.setRenderer(myGLRender);
         scaleGestureDetector = new ScaleGestureDetector(context,new scaleListener());
         //tolerance for translate
         scaledTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         this.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+    }
+    public void updateData(float[] vertexArray){
+        myGLRender.setVertexArray(vertexArray);
+        refreshView();
     }
 
     public float getMinScale() {
@@ -59,6 +64,14 @@ public class myGLSurfaceView extends GLSurfaceView {
 
     public void setMaxScale(float maxScale) {
         this.maxScale = maxScale;
+    }
+
+    public MyGLRender getMyGLRender() {
+        return myGLRender;
+    }
+
+    public void setMyGLRender(MyGLRender myGLRender) {
+        this.myGLRender = myGLRender;
     }
 
     private void refreshView(){
@@ -157,6 +170,8 @@ public class myGLSurfaceView extends GLSurfaceView {
     class MyGLRender implements GLSurfaceView.Renderer{
         private float scale = 1;
         private float x = 0f,y = 0f;
+        private float[] vertexArray;
+        private float pointSize = 1.0f;
         void setScale(float scale_){
             Log.d(TAG,"onscale set scale = "+scale_);
             scale = scale_;
@@ -164,6 +179,14 @@ public class myGLSurfaceView extends GLSurfaceView {
         void setTrans(float x_,float y_){
             x = x + x_;
             y = y + y_;
+        }
+
+        public float getPointSize() {
+            return pointSize;
+        }
+
+        public void setPointSize(float pointSize) {
+            this.pointSize = pointSize;
         }
 
         public float[] getVertexArray() {
@@ -177,76 +200,90 @@ public class myGLSurfaceView extends GLSurfaceView {
         //坐标维数
         int coor = 3;
         //3-coord x y z
-        private float[] vertexArray;
-        //test array
-        void initVertexArray(int size){
-            vertexArray = new float[size * 3 * 2];
-            Random random = new Random();
-            int index = 0;
-            float x_add = 0.01f;
-            for (int i = 0;i < size ; ++i){
-                float v = random.nextFloat();
-                vertexArray[index] = x_add;
-                x_add += 0.01f;
-                ++index;
-                v = random.nextFloat();
-                vertexArray[index] = 0.0f;
-                ++index;
-                vertexArray[index] = 0.0f;
-                ++index;
-            }
-            float y_add = 0.01f;
-            for (int i = 0;i < size ; ++i){
-                float v = random.nextFloat();
-                vertexArray[index] = 0.0f;
-                y_add += 0.01f;
-                ++index;
-                v = random.nextFloat();
-                vertexArray[index] = y_add;
-                ++index;
-                vertexArray[index] = 0.0f;
-                ++index;
-            }
 
-        }
         //创建时候调用，配置环境
         @Override
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
             gl.glClearColor(1.0f,1.0f,1.0f,0.0f);
 //        point = new Point();
             gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-            initVertexArray(100);
+
         }
 
         //view的几何形态发生变化时候调用，例如横竖屏切换
         @Override
         public void onSurfaceChanged(GL10 gl, int width, int height) {
             //设置窗口大小
+            Log.d(TAG, "onSurfaceChanged: width height = "+width+" "+height);
             gl.glViewport(0,0,width,height);
+            //设置抗锯齿
+//            gl.glEnable(GL10.GL_BLEND);
+//            gl.glBlendFunc(GL10.GL_SRC_ALPHA,GL10.GL_ONE_MINUS_SRC_ALPHA);
+//            gl.glEnable(GL10.GL_POINT_SMOOTH);
+//            gl.glEnable(GL10.GL_NICEST);
         }
 
         //重新绘制view调用
         @Override
         public void onDrawFrame(GL10 gl) {
-            gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+            if (vertexArray.length != 0) {
+                gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
 
-            gl.glColor4f(0.63671875f, 0.76953125f, 0.22265625f, 0.0f);
-            gl.glPointSize(10f * scale);
-            gl.glLoadIdentity();
+                //set color of point
+                gl.glColor4f(0.63671875f, 0.76953125f, 0.22265625f, 0.0f);
+                gl.glPointSize(pointSize * scale);
+                gl.glLoadIdentity();
 
-            Log.d(TAG, "onDrawFrame: scale = "+scale);
-            Log.d(TAG, "onDrawFrame: x y = "+x+" "+y);
-            gl.glTranslatef(x * 2,y * 2,0.0f);
-            gl.glScalef(scale,scale,1f);
-            gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+                gl.glEnable(GL10.GL_POINT_SMOOTH);
+                gl.glHint(GL10.GL_POINT_SMOOTH,GL10.GL_NICEST);
 
-            Log.d(TAG, "onDrawFrame: length = "+vertexArray.length);
-            //指定顶点
-            gl.glVertexPointer(coor,GL10.GL_FLOAT,0,Tool.getFloatBuffer(vertexArray));
-            //最后一个参数为顶点的数量
-            gl.glDrawArrays(GL10.GL_POINTS,0,vertexArray.length/3);
+                Log.d(TAG, "onDrawFrame: scale = "+scale);
+                Log.d(TAG, "onDrawFrame: x y = "+x+" "+y);
+                gl.glTranslatef(x * 2,y * 2,0.0f);
+                gl.glScalef(scale,scale,1f);
+                gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
 
-            gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+                Log.d(TAG, "onDrawFrame: length = "+vertexArray.length);
+                //指定顶点
+                gl.glVertexPointer(coor,GL10.GL_FLOAT,0,Tool.getFloatBuffer(vertexArray));
+                //最后一个参数为顶点的数量
+                gl.glDrawArrays(GL10.GL_POINTS,0,vertexArray.length/coor);
+
+                gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+            }else {
+                Log.e(TAG, "onDrawFrame: vertexArray length = 0");
+            }
+        }
+    }
+
+
+    class MyConfigChooser implements GLSurfaceView.EGLConfigChooser {
+        @Override
+        public EGLConfig chooseConfig(EGL10 egl,
+                                      javax.microedition.khronos.egl.EGLDisplay display) {
+
+            int attribs[] = {
+                    EGL10.EGL_LEVEL, 0,
+                    EGL10.EGL_RENDERABLE_TYPE, 4,  // EGL_OPENGL_ES2_BIT
+                    EGL10.EGL_COLOR_BUFFER_TYPE, EGL10.EGL_RGB_BUFFER,
+                    EGL10.EGL_RED_SIZE, 8,
+                    EGL10.EGL_GREEN_SIZE, 8,
+                    EGL10.EGL_BLUE_SIZE, 8,
+                    EGL10.EGL_DEPTH_SIZE, 16,
+                    EGL10.EGL_SAMPLE_BUFFERS, 1,
+                    EGL10.EGL_SAMPLES, 4,  // 在这里修改MSAA的倍数，4就是4xMSAA，再往上开程序可能会崩
+                    EGL10.EGL_NONE
+            };
+            EGLConfig[] configs = new EGLConfig[1];
+            int[] configCounts = new int[1];
+            egl.eglChooseConfig(display, attribs, configs, 1, configCounts);
+
+            if (configCounts[0] == 0) {
+                // Failed! Error handling.
+                return null;
+            } else {
+                return configs[0];
+            }
         }
     }
 
