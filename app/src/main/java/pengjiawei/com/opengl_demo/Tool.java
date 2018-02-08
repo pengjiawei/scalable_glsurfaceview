@@ -1,5 +1,8 @@
 package pengjiawei.com.opengl_demo;
 
+import android.app.ActivityManager;
+import android.content.Context;
+import android.content.pm.ConfigurationInfo;
 import android.opengl.GLES20;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,5 +62,13 @@ public class Tool {
                     View.MeasureSpec.UNSPECIFIED);
         }
         child.measure(childWidthSpec, childHeightSpec);
+    }
+    public boolean checkSupportGl20(Context context){
+        final ActivityManager activityManager =
+                (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        final ConfigurationInfo configurationInfo =
+                activityManager.getDeviceConfigurationInfo();
+        final boolean supportsEs2 = configurationInfo.reqGlEsVersion >= 0x20000;
+        return supportsEs2;
     }
 }

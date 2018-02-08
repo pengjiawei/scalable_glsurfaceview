@@ -7,7 +7,7 @@
     android:background="@color/colorAccent"
     tools:context="pengjiawei.com.opengl_demo.MainActivity">
 
-   <android.opengl.GLSurfaceView
+   <pengjiawei.com.opengl_demo.myGLSurfaceView
        android:layout_centerInParent="true"
        android:layout_width="300dp"
        android:layout_height="300dp"
