@@ -1,6 +1,7 @@
 package pengjiawei.com.opengl_demo;
 
 import android.content.Context;
+import android.opengl.EGLDisplay;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
@@ -204,9 +205,8 @@ public class MyGLSurfaceView extends GLSurfaceView {
         //创建时候调用，配置环境
         @Override
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-            gl.glClearColor(1.0f,1.0f,1.0f,0.0f);
-//        point = new Point();
-            gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+            gl.glClearColor(20/255f,90/255f,160/255f,0);
+//            gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
 
         }
 
@@ -230,10 +230,14 @@ public class MyGLSurfaceView extends GLSurfaceView {
                 gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
 
                 //set color of point
-                gl.glColor4f(0.63671875f, 0.76953125f, 0.22265625f, 0.0f);
+                gl.glColor4f(107/255f, 209/255f, 1f, 0f);
                 gl.glPointSize(pointSize * scale);
                 gl.glLoadIdentity();
 
+                //抗锯齿
+                //useless
+//                gl.glEnable(GL10.GL_BLEND);
+//                gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
                 gl.glEnable(GL10.GL_POINT_SMOOTH);
                 gl.glHint(GL10.GL_POINT_SMOOTH,GL10.GL_NICEST);
 
@@ -249,6 +253,20 @@ public class MyGLSurfaceView extends GLSurfaceView {
                 //最后一个参数为顶点的数量
                 gl.glDrawArrays(GL10.GL_POINTS,0,vertexArray.length/coor);
 
+                float[] tempArray = {
+                        -0.6f , 0.6f , 0f,
+
+                        -0.2f , 0f , 0f ,
+
+                        0.2f , 0.6f , 0f ,
+
+                        0.6f , 0f , 0f
+                };
+                //for test
+                gl.glColor4f(255f,0f,0f,0f);
+                gl.glVertexPointer(coor,GL10.GL_FLOAT,0,Tool.getFloatBuffer(tempArray));
+                gl.glDrawArrays(GL10.GL_LINE_STRIP,0,tempArray.length/coor);
+                //
                 gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
             }else {
                 Log.e(TAG, "onDrawFrame: vertexArray length = 0");
